@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+# Replace YOUR-DOMAIN.example with the deployed site domain before publishing.
+Sitemap: https://YOUR-DOMAIN.example/sitemap.xml

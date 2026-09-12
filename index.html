@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HerCalm - Wellness & Self-Care Toolkit</title>
+  <meta name="theme-color" content="#EC4899">
+  <meta name="description" content="A gentle wellness toolkit for planning, reflection, relaxation, tracking, and self-care.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    :root{
+      --pink:#EC4899; --pink-light:#FDF2F8; --pink-dark:#BE185D;
+      --purple:#A855F7; --gray:#6B7280; --dark:#1F2937; --green:#10B981;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+    body{background:linear-gradient(180deg,var(--pink-light) 0%,#FFFFFF 300px);color:var(--dark);line-height:1.6}
+   .container{max-width:480px;margin:0 auto;padding:16px;min-height:100vh}
+   .hidden{display:none!important}
+    h1{color:var(--pink-dark);font-size:28px;font-weight:700;text-align:center;margin:8px 0 4px}
+    h2{color:var(--pink-dark);font-size:22px;font-weight:600;margin:16px 0 12px}
+    h3{color:var(--dark);font-size:18px;font-weight:600;margin:16px 0 8px}
+   .sub{color:var(--gray);text-align:center;font-size:14px;margin-bottom:24px}
+   .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}
+   .tool-card{background:white;border-radius:20px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(236,72,153,0.08);cursor:pointer;transition:all 0.2s;border:2px solid transparent}
+   .tool-card:active{transform:scale(0.97);border-color:var(--pink)}
+   .tool-card span{font-size:32px;display:block;margin-bottom:6px}
+   .tool-card strong{display:block;color:var(--dark);font-size:14px;margin-bottom:2px}
+   .tool-card p{font-size:11px;color:var(--gray)}
+   .btn{background:var(--pink);color:white;border:0;padding:14px 24px;border-radius:12px;font-size:16px;font-weight:600;width:100%;cursor:pointer;margin:8px 0}
+   .btn:active{background:var(--pink-dark)}
+   .btn-secondary{background:white;color:var(--pink);border:2px solid var(--pink)}
+   .back-nav{display:flex;align-items:center;gap:8px;margin-bottom:16px;cursor:pointer;color:var(--pink);font-weight:600}
+   .card{background:white;border-radius:16px;padding:20px;margin:16px 0;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+   .timer{font-size:64px;text-align:center;margin:32px 0;font-weight:200;color:var(--pink-dark)}
+   .progress-bar{height:8px;background:#F3F4F6;border-radius:8px;overflow:hidden;margin:16px 0}
+   .progress{height:100%;background:var(--pink);width:0%;transition:width 1s}
+   .affiliate{background:#FEF3C7;border:2px dashed #F59E0B;border-radius:12px;padding:16px;margin:20px 0;text-align:center}
+   .affiliate a{color:var(--pink-dark);font-weight:700;text-decoration:none}
+   .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #F3F4F6;display:flex;justify-content:space-around;padding:12px 0;max-width:480px;margin:0 auto;z-index:100}
+   .nav-item{color:var(--gray);font-size:11px;text-align:center;cursor:pointer}
+   .nav-item.active{color:var(--pink);font-weight:600}
+   .nav-item span{display:block;font-size:20px;margin-bottom:2px}
+    input[type="range"]{width:100%;accent-color:var(--pink)}
+    textarea{width:100%;border:2px solid #F3F4F6;border-radius:8px;padding:12px;font-family:inherit}
+   .badge{display:inline-block;background:var(--pink-light);color:var(--pink-dark);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin:4px 4px 4px 0;cursor:pointer}
+   .badge.active{background:var(--pink);color:white}
+   .faq-item{background:#F9FAFB;border-radius:12px;padding:16px;margin:12px 0;cursor:pointer}
+   .faq-item:active{background:#F3F4F6}
+   .faq-item strong{display:block;color:var(--dark);margin-bottom:8px}
+   .faq-answer{font-size:14px;color:var(--gray);margin-top:8px;line-height:1.5}
+   .sweet-msg{background:linear-gradient(135deg,var(--purple),var(--pink));color:white;border-radius:16px;padding:20px;margin:20px 0;text-align:center;position:relative}
+   .sweet-msg button{position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.2);border:0;color:white;border-radius:50%;width:24px;height:24px;cursor:pointer}
+   .mood-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0}
+   .mood-btn{font-size:28px;background:#F9FAFB;border:2px solid transparent;border-radius:12px;padding:12px;cursor:pointer}
+   .mood-btn.active{border-color:var(--pink);background:var(--pink-light)}
+    .btn-danger{background:#FEF2F2;color:#DC2626;border:2px solid #DC2626}
+
+   .topbar{display:flex;align-items:center;justify-content:space-between;padding:4px 0 8px}
+   .menu-btn{border:0;background:white;border-radius:12px;padding:10px 12px;box-shadow:0 2px 8px rgba(0,0,0,.05);cursor:pointer;font-size:20px}
+   .drawer{position:fixed;inset:0;background:rgba(31,41,55,.35);z-index:500;display:none}
+   .drawer.open{display:block}
+   .drawer-panel{width:min(330px,88vw);height:100%;background:white;padding:22px;box-shadow:8px 0 24px rgba(0,0,0,.12);overflow:auto}
+   .drawer-panel h2{margin-top:0}.menu-link{display:block;padding:13px 10px;border-radius:10px;color:var(--dark);text-decoration:none;margin:3px 0}
+   .menu-link:hover{background:var(--pink-light);color:var(--pink-dark)}
+   .ai-hero{background:linear-gradient(135deg,#7c3aed,#ec4899);color:white;border-radius:20px;padding:20px;margin:18px 0;cursor:pointer}
+   .ai-hero h3{color:white;margin-top:0}.ai-hero p{color:rgba(255,255,255,.9)}
+   .field{width:100%;padding:12px;border:2px solid #F3F4F6;border-radius:10px;margin:6px 0 12px;font:inherit}
+   .mini-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.stat{background:#F9FAFB;padding:12px;border-radius:12px;text-align:center}
+   .disclaimer-box{background:#FFF7ED;border:1px solid #FDBA74;border-radius:12px;padding:12px;font-size:12px;color:#9A3412;margin:16px 0}
+
+  </style>
+</head>
+<body>
+  <noscript><div style="padding:20px;text-align:center;background:#FEF2F2;color:#DC2626">Please enable JavaScript to use HerCalm.</div></noscript>
+  <div class="drawer" id="drawer" onclick="closeMenu(event)">
+    <div class="drawer-panel" onclick="event.stopPropagation()">
+      <div class="topbar"><strong style="color:var(--pink-dark);font-size:20px">HerCalm</strong><button class="menu-btn" onclick="toggleMenu()">×</button></div>
+      <a class="menu-link" href="#" onclick="navFromMenu('home');return false">🏠 Home</a>
+      <a class="menu-link" href="#" onclick="navFromMenu('tracker');return false">📊 Cycle & Comfort Tracker</a>
+      <a class="menu-link" href="#" onclick="navFromMenu('ai');return false">✨ CalmPlan AI</a>
+      <a class="menu-link" href="#" onclick="navFromMenu('cycle');return false">🗓️ Cycle Planner</a>
+      <a class="menu-link" href="#" onclick="navFromMenu('stretch');return false">🤸 Gentle Stretch Timer</a>
+      <a class="menu-link" href="#" onclick="navFromMenu('hydrate');return false">💧 Hydration Timer</a>
+      <a class="menu-link" href="#" onclick="navFromMenu('guide');return false">📖 Wellness Guide & FAQs</a>
+      <hr style="border:0;border-top:1px solid #eee;margin:14px 0">
+      <a class="menu-link" href="about.html">ℹ️ About</a>
+      <a class="menu-link" href="privacy.html">🔒 Privacy</a>
+      <a class="menu-link" href="terms.html">📄 Terms</a>
+      <a class="menu-link" href="disclaimer.html">⚠️ Disclaimer</a>
+    </div>
+  </div>
+  <div class="container">
+    <!-- HOME -->
+    <div id="home">
+      <div class="topbar"><button class="menu-btn" onclick="toggleMenu()" aria-label="Open menu">☰</button><div style="width:44px"></div></div><h1>HerCalm</h1>
+      <p class="sub">12 practical wellness tools for planning, reflection & relaxation</p>
+
+      <div class="ai-hero" onclick="nav('ai')"><h3>✨ CalmPlan AI</h3><p>Turn your mood, comfort notes and available time into a personalized self-care routine.</p></div>
+      <div id="dailyMessage" class="sweet-msg hidden">
+        <button onclick="closeDailyMessage()">×</button>
+        <strong>Your Daily Hug 💗</strong>
+        <p id="messageText" style="margin-top:8px;font-size:14px"></p>
+      </div>
+
+      <div class="grid">
+        <div class="tool-card" onclick="nav('yoga')"><span>🧘‍♀️</span><strong>Yoga Flow</strong><p>6-min gentle movement</p></div>
+        <div class="tool-card" onclick="nav('breathe')"><span>🌸</span><strong>Calm Breath</strong><p>4-7-8 method</p></div>
+        <div class="tool-card" onclick="nav('heat')"><span>🔥</span><strong>Heat & Rest Timer</strong><p>20-min interval</p></div>
+        <div class="tool-card" onclick="nav('points')"><span>💆‍♀️</span><strong>Self-Massage Timer</strong><p>Guided relaxation</p></div>
+        <div class="tool-card" onclick="nav('tracker')"><span>📊</span><strong>Tracker</strong><p>Log + review</p></div>
+        <div class="tool-card" onclick="nav('mood')"><span>😊</span><strong>Mood Check</strong><p>Track your day</p></div>
+        <div class="tool-card" onclick="nav('sounds')"><span>🎵</span><strong>Calm Sounds</strong><p>Rain & waves</p></div>
+        <div class="tool-card" onclick="nav('tea')"><span>🍵</span><strong>Warm Drink Guide</strong><p>Simple comfort ideas</p></div>
+      </div>
+
+      <div class="grid">
+        <div class="tool-card" onclick="nav('cycle')"><span>🗓️</span><strong>Cycle Planner</strong><p>Simple date planning</p></div>
+        <div class="tool-card" onclick="nav('stretch')"><span>🤸</span><strong>Stretch Timer</strong><p>5-minute reset</p></div>
+        <div class="tool-card" onclick="nav('hydrate')"><span>💧</span><strong>Hydration Timer</strong><p>Gentle reminders</p></div>
+        <div class="tool-card" onclick="nav('insights')"><span>📈</span><strong>Pattern Insights</strong><p>Your local data</p></div>
+      </div>
+
+      <div class="tool-card" onclick="nav('guide')" style="grid-column:span 2;border-color:var(--purple)">
+        <span>📖</span><strong>Cycle Wellness Guide + FAQs</strong><p>Gentle routines, self-care ideas & answers</p>
+      </div>
+
+      <p style="text-align:center;font-size:12px;margin:32px 0 80px;color:var(--gray)">
+        HerCalm • <a href="privacy.html" style="color:var(--pink)">Privacy</a> • <a href="terms.html" style="color:var(--pink)">Terms</a> • <a href="disclaimer.html" style="color:var(--pink)">Disclaimer</a>
+      </p>
+    </div>
+
+    <!-- TOOL 1: YOGA -->
+    <div id="yoga" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div>
+      <h2>Gentle Yoga Flow</h2>
+      <div class="card">
+        <div class="timer" id="yogaTimer">6:00</div>
+        <div class="progress-bar"><div class="progress" id="yogaProgress"></div></div>
+        <h3 id="poseName">Ready to Start?</h3>
+        <p id="poseDesc">Find a quiet space. 6 minutes for gentle movement and relaxation.</p>
+      </div>
+      <button class="btn" id="yogaBtn" onclick="toggleYoga()">Start 6-Min Flow</button>
+      <div class="affiliate"><strong>Need a yoga mat?</strong><br><a href="#" onclick="trackAffiliate(event,'yoga-mat')">Shop non-slip mats →</a></div>
+    </div>
+
+    <!-- TOOL 2: BREATHING -->
+    <div id="breathe" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div>
+      <h2>Calm Breathing Timer</h2>
+      <div class="card" style="text-align:center;padding:40px 20px">
+        <div class="timer" id="breatheTimer" style="font-size:48px">Ready</div>
+        <p id="breatheInstruction" style="color:var(--gray);margin-top:16px">Tap start. Follow the rhythm.</p>
+        <div class="progress-bar" style="margin-top:32px"><div class="progress" id="breatheProgress"></div></div>
+      </div>
+      <button class="btn" id="breatheBtn" onclick="toggleBreathe()">Start Breathing</button>
+    </div>
+
+    <!-- TOOL 3: HEAT -->
+    <div id="heat" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div>
+      <h2>Heat & Rest Timer</h2>
+      <div class="card">
+        <div class="timer" id="heatTimer">20:00</div>
+        <p style="text-align:center;color:var(--gray)">A simple interval timer for a heat/rest routine. Follow the product instructions for anything you use.</p>
+      </div>
+      <button class="btn" id="heatBtn" onclick="toggleHeat()">Start 20-Min Timer</button>
+      <div class="affiliate"><strong>Need a heat pad?</strong><br><a href="#" onclick="trackAffiliate(event,'heat-pad')">See microwavable pads →</a></div>
+    </div>
+
+    <!-- TOOL 4: RELAXATION TIMER -->
+    <div id="points" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div>
+      <h2>Relaxation Timer</h2>
+      <p class="sub">Simple hands-free timers for a quiet pause.</p>
+      <div class="card">
+        <h3>2-Minute Pause</h3>
+        <p style="font-size:14px;color:var(--gray);margin:8px 0">Sit comfortably, relax your shoulders, and take a quiet break.</p>
+        <button class="btn btn-secondary" onclick="startPointTimer(120, 'pause2')">Start 2-Min Timer</button>
+        <div class="timer" id="pause2Timer" style="font-size:32px;margin:16px 0;display:none">2:00</div>
+      </div>
+      <div class="card">
+        <h3>1-Minute Hand Reset</h3>
+        <p style="font-size:14px;color:var(--gray);margin:8px 0">Relax your hands and gently move your fingers within a comfortable range.</p>
+        <button class="btn btn-secondary" onclick="startPointTimer(60, 'hand1')">Start 1-Min Timer</button>
+        <div class="timer" id="hand1Timer" style="font-size:32px;margin:16px 0;display:none">1:00</div>
+      </div>
+    </div>
+
+    <!-- TOOL 5: TRACKER -->
+    <div id="tracker" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div>
+      <h2>Cycle & Comfort Tracker</h2>
+      <div class="card">
+        <h3>Log Today</h3>
+        <label>Comfort Check: <span id="comfortValue">5</span>/10</label>
+        <input type="range" min="1" max="10" value="5" id="comfortLevel" oninput="document.getElementById('comfortValue').textContent=this.value">
+        <label style="display:block;margin:16px 0 8px">Today's tags:</label>
+        <div id="symptomBadges">
+          <span class="badge" onclick="toggleSymptom(this)">Stress</span>
+          <span class="badge" onclick="toggleSymptom(this)">Low energy</span>
+          <span class="badge" onclick="toggleSymptom(this)">Busy day</span>
+          <span class="badge" onclick="toggleSymptom(this)">Rest needed</span>
+          <span class="badge" onclick="toggleSymptom(this)">Tension</span>
+          <span class="badge" onclick="toggleSymptom(this)">Sleepy</span>
+        </div>
+        <textarea id="comfortNote" rows="2" placeholder="Add a private note about your day..."></textarea>
+        <button class="btn" onclick="saveLog()">Save Today's Log</button>
+      </div>
+      <div class="card">
+        <h3>Your History</h3>
+        <div id="historyList" style="font-size:14px;color:var(--gray)">No logs yet.</div>
+      </div>
+      <button class="btn btn-danger" onclick="resetAllData()" style="margin-top:16px">Delete All My Data</button>
+<p style="font-size:11px;color:var(--gray);text-align:center;margin-top:8px">This clears logs + moods permanently</p>
+    </div>
+
+    <!-- TOOL 6: MOOD CHECK -->
+    <div id="mood" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div>
+      <h2>Daily Mood Check-in</h2>
+      <p class="sub">Track your mood and routines to notice your own habits over time.</p>
+      <div class="card">
+        <h3>How do you feel today?</h3>
+        <div class="mood-grid">
+          <div class="mood-btn" onclick="setMood(1,this)">😭</div>
+          <div class="mood-btn" onclick="setMood(2,this)">😔</div>
+          <div class="mood-btn" onclick="setMood(3,this)">😐</div>
+          <div class="mood-btn" onclick="setMood(4,this)">🙂</div>
+          <div class="mood-btn" onclick="setMood(5,this)">😊</div>
+        </div>
+        <p id="moodMessage" style="text-align:center;color:var(--gray);margin-top:16px">Tap an emoji</p>
+        <button class="btn" onclick="saveMood()">Save Mood</button>
+      </div>
+      <div class="card">
+        <h3>Last 7 Days</h3>
+        <div id="moodHistory" style="font-size:14px">No mood logs yet.</div>
+      </div>
+    </div>
+
+    <!-- TOOL 7: CALM SOUNDS -->
+    <div id="sounds" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div>
+      <h2>Calm Sounds</h2>
+      <p class="sub">Use simple background sounds while you rest, read or reset.</p>
+      <div class="card">
+        <h3>Soft Rain-like Noise</h3>
+        <p style="font-size:14px;color:var(--gray)">A soft noise texture for a quieter atmosphere.</p>
+        <button class="btn btn-secondary" onclick="playSound('rain');return false">Play 5-Min Background</button>
+        <div class="timer" id="rainTimer" style="font-size:24px;margin:16px 0;display:none">5:00</div>
+      </div>
+      <div class="card">
+        <h3>Ocean-like Sound</h3>
+        <p style="font-size:14px;color:var(--gray)">A soft rolling noise texture for a relaxed atmosphere.</p>
+        <button class="btn btn-secondary" onclick="playSound('waves');return false">Play 5-Min Background</button>
+        <div class="timer" id="wavesTimer" style="font-size:24px;margin:16px 0;display:none">5:00</div>
+      </div>
+      <div class="card">
+        <h3>White Noise</h3>
+        <p style="font-size:14px;color:var(--gray)">A soft background loop for rest or focus.</p>
+        <button class="btn btn-secondary" onclick="playSound('white');return false">Play 10-Min Background</button>
+        <div class="timer" id="whiteTimer" style="font-size:24px;margin:16px 0;display:none">10:00</div>
+      </div>
+      <button class="btn btn-danger" onclick="stopSound()">Stop Sound</button>
+    </div>
+
+    <!-- TOOL 8: WARM DRINK GUIDE -->
+    <div id="tea" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div>
+      <h2>Warm Drink & Comfort Guide</h2>
+      <p class="sub">Simple beverage ideas for a relaxing routine. This is general wellness information.</p>
+      <div class="card">
+        <h3>🌿 Ginger & Honey</h3>
+        <p style="font-size:14px;color:var(--gray)">A simple warm-drink idea. Adjust ingredients to your personal preferences and dietary needs.</p>
+        <div class="badge">Warm & soothing</div>
+      </div>
+      <div class="card">
+        <h3>🌼 Chamomile - Relaxing option</h3>
+        <p style="font-size:14px;color:var(--gray)">A gentle, caffeine-free evening option. Enjoy as part of a calming routine if it suits you.</p>
+        <div class="badge">Evening routine</div>
+      </div>
+      <div class="card">
+        <h3>🍃 Peppermint - Refreshing option</h3>
+        <p style="font-size:14px;color:var(--gray)">A refreshing option that can be pleasant after meals. Choose what feels comfortable for you.</p>
+        <div class="badge">Refreshing</div>
+      </div>
+      <div class="affiliate"><strong>Warm drink supplies</strong><br><a href="#" onclick="trackAffiliate(event,'tea-bundle')">Browse options →</a></div>
+    </div>
+
+    <!-- GUIDE + FAQs -->
+    <div id="guide" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div>
+      <h2>Wellness Guide + FAQs</h2>
+      <div class="card">
+        <h3>Gentle Ideas for Your Period Days</h3>
+        <ul style="list-style:none">
+          <li style="margin:12px 0">✓ <strong>Move gently:</strong> Try walking or easy movement if it feels comfortable.</li>
+          <li style="margin:12px 0">✓ <strong>Take a pause:</strong> use a short timer for quiet rest</li>
+          <li style="margin:12px 0">✓ <strong>Eat normally:</strong> Choose balanced foods that fit your usual routine.</li>
+          <li style="margin:12px 0">✓ <strong>Keep it simple:</strong> Choose familiar foods and routines you already enjoy.</li>
+          <li style="margin:12px 0">✓ <strong>Hydration:</strong> keep a drink nearby and sip according to your normal routine</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Keep Your Routine Comfortable</h3>
+        <ul style="list-style:none">
+          <li style="margin:12px 0">• <strong>Listen to your preferences:</strong> Choose drinks and activities that suit you.</li>
+          <li style="margin:12px 0">✗ <strong>All-or-nothing routines:</strong> skip anything that does not feel comfortable</li>
+          <li style="margin:12px 0">• <strong>Skip anything uncomfortable:</strong> You do not need to force a routine.</li>
+          <li style="margin:12px 0">✗ <strong>Overcomplicating your routine:</strong> choose one or two simple activities</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Quick Answers</h3>
+        <div id="faqList"></div>
+      </div>
+    </div>
+
+
+
+    <!-- AI -->
+    <div id="ai" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div>
+      <h2>✨ CalmPlan AI</h2>
+      <p class="sub">A personalized self-care planner for general wellness routines. It does not diagnose conditions or provide medical advice.</p>
+      <div class="card">
+        <label>How are you feeling?</label>
+        <select id="aiMood" class="field"><option>Calm</option><option>Stressed</option><option>Low energy</option><option>Uncomfortable</option><option>Overwhelmed</option></select>
+        <label>What would help most?</label>
+        <select id="aiGoal" class="field"><option>Relaxation</option><option>Gentle movement</option><option>Focus</option><option>Better rest</option><option>A simple routine</option></select>
+        <label>How much time do you have?</label>
+        <select id="aiTime" class="field"><option>5 minutes</option><option>10 minutes</option><option>20 minutes</option><option>30 minutes</option></select>
+        <label>Anything else? <small>(optional)</small></label>
+        <textarea id="aiNote" rows="3" placeholder="e.g. I am at work and need something discreet"></textarea>
+        <button class="btn" onclick="generateCalmPlan()">Create My CalmPlan</button>
+      </div>
+      <div id="aiResult" class="card hidden"></div>
+      <div class="disclaimer-box">AI-generated wellness suggestions are for general self-care and are not a diagnosis, treatment, or substitute for professional care.</div>
+    </div>
+
+    <!-- CYCLE PLANNER -->
+    <div id="cycle" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div><h2>🗓️ Cycle Planner</h2>
+      <div class="card">
+        <label>First day of the cycle you want to plan from</label><input id="cycleStart" class="field" type="date">
+        <label>Typical cycle length</label><input id="cycleLength" class="field" type="number" min="15" max="60" value="28">
+        <button class="btn" onclick="calculateCycle()">Create Local Plan</button>
+      </div><div id="cycleResult" class="card hidden"></div>
+    </div>
+
+    <!-- STRETCH -->
+    <div id="stretch" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div><h2>🤸 Gentle Stretch Timer</h2>
+      <div class="card"><div class="timer" id="stretchTimer">05:00</div><p id="stretchStep" style="text-align:center;color:var(--gray)">Shoulder rolls • 60 sec</p><div class="progress-bar"><div class="progress" id="stretchProgress"></div></div></div>
+      <button class="btn" id="stretchBtn" onclick="toggleStretch()">Start 5-Min Reset</button>
+    </div>
+
+    <!-- HYDRATION -->
+    <div id="hydrate" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div><h2>💧 Hydration Timer</h2>
+      <div class="card"><div class="timer" id="hydrateTimer">30:00</div><p style="text-align:center;color:var(--gray)">A customizable reminder to pause for a drink if you want one.</p></div>
+      <button class="btn" id="hydrateBtn" onclick="toggleHydrate()">Start 30-Min Reminder</button>
+      <button class="btn btn-secondary" onclick="logWater()">Log a Glass</button>
+      <p id="waterCount" style="text-align:center;color:var(--gray)">Glasses logged today: 0</p>
+    </div>
+
+    <!-- INSIGHTS -->
+    <div id="insights" class="hidden">
+      <div class="back-nav" onclick="nav('home')">← Back</div><h2>📈 Pattern Insights</h2>
+      <p class="sub">Private, on-device summaries of the data you choose to log.</p>
+      <div id="insightStats" class="mini-grid"></div><div id="insightText" class="card"></div>
+    </div>
+
+    <!-- ABOUT -->
+    <div id="about" class="hidden"><div class="back-nav" onclick="nav('home')">← Back</div><h2>About HerCalm</h2><div class="card"><p>HerCalm is a privacy-first self-care toolkit built around timers, journaling, mood tracking, planning and gentle routines. It is designed to be useful without requiring an account.</p><p style="margin-top:12px">Your locally stored entries remain in your browser unless a future deployment explicitly adds a backend.</p></div></div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="nav('home')"><span>🏠</span>Home</div>
+    <div class="nav-item" onclick="nav('tracker')"><span>📊</span>Tracker</div>
+    <div class="nav-item" onclick="nav('guide')"><span>📖</span>Guide</div>
+    <div class="nav-item" onclick="nav('mood')"><span>😊</span>Mood</div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+  </html>
