@@ -30,7 +30,14 @@ const mono = icons.find(i => String(i.purpose || '').includes('monochrome'));
 if (!best?.src || size(best) < 192) throw new Error('The web manifest needs an app icon. Add a PNG icon of at least 192px; 512px is recommended.');
 
 const host = new URL(page.url || pageUrl).hostname.replace(/^www\./, '').toLowerCase();
-const generatedPackage = host.split('.').filter(Boolean).reverse().map(x => x.replace(/[^a-z0-9_]/g, '')).filter(Boolean).map(x => /^[a-z]/.test(x) ? x : `a${x}`).join('.');
+const HOST_PLATFORMS = ['vercel.app','netlify.app','pages.dev','github.io','web.app','firebaseapp.com','onrender.com','herokuapp.com','fly.dev','railway.app','surge.sh','workers.dev','glitch.me','repl.co','replit.app','azurewebsites.net','framer.app','webflow.io','wixsite.com','blogspot.com'];
+const cleanSeg = x => String(x).toLowerCase().replace(/[^a-z0-9]/g, '');
+const platform = HOST_PLATFORMS.find(p => host.endsWith('.' + p));
+// Free hosts: app.<name>.<platform> (Google Play accepts app.wybuildblack.vercel, not app.vercel.wybuildblack); owned domains: reverse-DNS
+const generatedPackage = (platform
+  ? ['app', cleanSeg(host.slice(0, -(platform.length + 1)).split('.').join('')), cleanSeg(platform.split('.')[0])]
+  : host.split('.').reverse().map(cleanSeg)
+).filter(Boolean).map(x => /^[a-z]/.test(x) ? x : `a${x}`).join('.');
 const packageId = raw.packageId || generatedPackage;
 if (!/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(packageId)) throw new Error(`Could not generate a valid free package ID from ${host}.`);
 
@@ -41,6 +48,30 @@ const orientation = ['default','portrait','landscape'].includes(raw.orientation 
 const themeColor = /^#[0-9a-f]{6}$/i.test(raw.themeColor || web.theme_color || '') ? (raw.themeColor || web.theme_color) : '#FFFFFF';
 const backgroundColor = /^#[0-9a-f]{6}$/i.test(raw.backgroundColor || web.background_color || '') ? (raw.backgroundColor || web.background_color) : '#FFFFFF';
 const shortcuts = Array.isArray(web.shortcuts) ? web.shortcuts.slice(0,4).filter(s => s?.name && s?.url).map(s => ({ name: s.name, shortName: (s.short_name || s.name).slice(0,12), url: new URL(s.url, manifestUrl).pathname + new URL(s.url, manifestUrl).search, chosenIconUrl: s.icons?.[0]?.src ? abs(s.icons[0].src) : undefined })) : [];
+// Link handling rules (already validated by the WyBuild API; re-parsed here so a hand-edited config cannot break the build)
+const linkRules = [];
+for (const r of Array.isArray(raw.linkRules) ? raw.linkRules.slice(0, 30) : []) {
+  const mode = ['internal', 'external', 'other'].includes(r?.mode) ? r.mode : '';
+  const orig = String(r?.pattern || '').trim();
+  const t = orig.toLowerCase();
+  if (!mode || !t) continue;
+  const bare = t.replace(/:\/\/$/, ':').replace(/:$/, '');
+  if (!/[/.]/.test(bare) && /^[a-z][a-z0-9+.-]*$/.test(bare)) {
+    if (mode === 'other' && !['http', 'https', 'javascript', 'data', 'file', 'blob', 'about', 'vbscript', 'content', 'intent'].includes(bare)) linkRules.push({ kind: 'scheme', scheme: bare, mode });
+    continue;
+  }
+  const rest = orig.replace(/^https?:\/\//i, '');
+  const slash = rest.indexOf('/');
+  const h = (slash === -1 ? rest : rest.slice(0, slash)).toLowerCase();
+  let path = slash === -1 ? '' : rest.slice(slash).replace(/[?#].*$/, '').replace(/\*+$/, '');
+  if (path === '/') path = '';
+  if (!/^(\*\.)?([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/.test(h) || (path && !/^\/[A-Za-z0-9\-._~%/]*$/.test(path))) continue;
+  linkRules.push({ kind: 'host', host: h.replace(/^\*\./, ''), wildcard: h.startsWith('*.'), path, mode });
+}
+// A custom domain set to "internal" must be a trusted origin too, or Chrome shows the address bar over it.
+// (Wildcards cannot be trusted origins: list each subdomain you want fullscreen.)
+const trusted = new Set((Array.isArray(raw.additionalTrustedOrigins) ? raw.additionalTrustedOrigins : []).map(String));
+for (const r of linkRules) if (r.kind === 'host' && r.mode === 'internal' && !r.wildcard && r.host.replace(/^www\./, '') !== host) trusted.add(`https://${r.host}`);
 const features = {};
 if (raw.locationDelegation) features.locationDelegation = { enabled: true };
 if (raw.playBilling) features.playBilling = { enabled: true };
@@ -61,7 +92,7 @@ const json = {
   display,
   themeColor,
   themeColorDark: themeColor,
-  navigationColor: themeColor,
+  navigationColor: /^#[0-9a-f]{6}$/i.test(raw.navigationColor || '') ? raw.navigationColor : themeColor,
   backgroundColor,
   enableNotifications: raw.enableNotifications !== false,
   enableSiteSettingsShortcut: raw.enableSiteSettingsShortcut !== false,
@@ -75,11 +106,13 @@ const json = {
   signingKey: { path: `${out}/wybuild-release.jks`, alias: process.env.WB_KEY_ALIAS || process.env.WB_KEY_ALIAS_SECRET || 'wybuild' },
   shortcuts,
   webManifestUrl: manifestUrl,
-  fallbackType: 'customtabs',
+  // Standalone must never fall back to a browser Custom Tab. Bubblewrap accepts only
+  // 'customtabs' or 'webview'; use WebView as the safety fallback, while TWA keeps Custom Tabs.
+  fallbackType: raw.shell === 'twa' ? 'customtabs' : 'webview',
   features,
-  minSdkVersion: Math.max(21, Number(raw.minSdkVersion) || 21),
+  minSdkVersion: Math.max(24, Number(raw.minSdkVersion) || 24), // androidbrowserhelper 2.7.x needs 24
   orientation,
-  additionalTrustedOrigins: Array.isArray(raw.additionalTrustedOrigins) ? raw.additionalTrustedOrigins : [],
+  additionalTrustedOrigins: [...trusted],
   fingerprints: raw.expectedFingerprint ? [{ value: String(raw.expectedFingerprint).replace(/:/g,'').toUpperCase() }] : [],
   fileHandlers: web.file_handlers || [],
   protocolHandlers: web.protocol_handlers || [],
@@ -89,7 +122,12 @@ const json = {
 };
 // WyBuild-only options (not Bubblewrap manifest fields): applied by the "Apply manual Android features" step
 const extras = {
+  // "standalone" = WyBuild's native shell (never an address bar); "twa" = plain Trusted Web Activity (needs Digital Asset Links)
+  shell: raw.shell === 'twa' ? 'twa' : 'standalone',
+  linkRules,
   predictiveBack: raw.predictiveBack === true,
+  // opt-in native bridge features (the always-on set is defined in twa-native.py)
+  nativeFeatures: (Array.isArray(raw.nativeFeatures) ? raw.nativeFeatures : []).filter(f => ['biometric', 'sharetarget', 'reminders'].includes(f)),
   playSigningFingerprint: /^([0-9A-Fa-f]{2}:?){32}$/.test(String(raw.playSigningFingerprint || '')) ? String(raw.playSigningFingerprint).replace(/:/g, '').toUpperCase().match(/.{2}/g).join(':') : '',
 };
 await fs.writeFile(`${out}/wybuild-extras.json`, JSON.stringify(extras, null, 2));
@@ -102,4 +140,5 @@ console.log(`WYBUILD_VERSION=${json.appVersion}`);
 console.log(`WYBUILD_VERSION_CODE=${json.appVersionCode}`);
 console.log(`WYBUILD_WEB_MANIFEST=${manifestUrl}`);
 console.log(`WYBUILD_SNAPSHOT=${snapshot}`);
-console.log(`WYBUILD_SOURCE_HOST=${host}`);
+console.log(`WYBUILD_SOURCE_HOST=${json.host}`);
+console.log(`WYBUILD_SHELL=${extras.shell}`);
